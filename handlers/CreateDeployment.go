@@ -11,7 +11,7 @@ import (
 
 func CreateDeployment(c *gin.Context) {
 
-	var configDeployment KubeAPI.ConfigDeployment
+	var configDeployment KubeAPI.ConfigDeploymentData
 
 	// Process request params with required field validation
 	if err := c.BindJSON(&configDeployment); err != nil {
