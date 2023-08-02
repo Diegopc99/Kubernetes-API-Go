@@ -3,6 +3,7 @@ package KubeAPI
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
@@ -10,6 +11,7 @@ import (
 )
 
 type ConfigDeploymentData struct {
+	Namespace      string              `json:"namespace"`
 	Name           string              `json:"name" binding:"required"`
 	Replicas       int32               `json:"replicas"`
 	ContainerName  string              `json:"containerName" binding:"required"`
@@ -19,14 +21,14 @@ type ConfigDeploymentData struct {
 }
 
 type ContainerPortData struct {
-	Name     string
-	Protocol string
-	Port     int32
+	Name     string `json:"name" binding:"required"`
+	Protocol string `json:"protocol" binding:"required"`
+	Port     int32  `json:"port" binding:"required"`
 }
 
-func KubeCreateDeployment(configData ConfigDeploymentData) {
+func KubeCreateDeployment(configData ConfigDeploymentData) (*appsv1.Deployment, error) {
 
-	deploymentsClient := KubeClient.AppsV1().Deployments(apiv1.NamespaceDefault)
+	deploymentsClient := KubeClient.AppsV1().Deployments(configData.Namespace)
 
 	// Create Container Ports
 	var containerPorts []apiv1.ContainerPort
@@ -34,7 +36,7 @@ func KubeCreateDeployment(configData ConfigDeploymentData) {
 
 		containerPort := apiv1.ContainerPort{
 			Name:          portData.Name,
-			Protocol:      apiv1.Protocol(portData.Protocol),
+			Protocol:      apiv1.Protocol(strings.ToUpper(portData.Protocol)),
 			ContainerPort: portData.Port,
 		}
 
@@ -68,11 +70,11 @@ func KubeCreateDeployment(configData ConfigDeploymentData) {
 	}
 
 	// Create Deployment
-	fmt.Println("Creating deployment...")
 	result, err := deploymentsClient.Create(context.TODO(), deployment, metav1.CreateOptions{})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	fmt.Printf("Created deployment %q.\n", result.GetObjectMeta().GetName())
 
+	return result, nil
 }

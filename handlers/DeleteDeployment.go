@@ -1,29 +1,55 @@
 package handlers
 
 import (
-	"errors"
+	"net/http"
 
 	"github.com/Kubernetes-API-Go/KubeAPI"
 	"github.com/Kubernetes-API-Go/exceptions"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
 
 func DeleteDeployment(c *gin.Context) {
 
-	var data KubeAPI.DeleteDeploymentData
+	deploymentName := c.Param("deploymentName")
+	namespace := c.Query("namespace")
 
-	// Process request params with required field validation
-	if err := c.BindJSON(&data); err != nil {
-		var verr validator.ValidationErrors
-		if errors.As(err, &verr) {
-			c.Error(&exceptions.MissingFields{})
-			return
-		}
+	if deploymentName == "" {
 		c.Error(&exceptions.InvalidRequest{})
 		return
 	}
 
-	KubeAPI.KubeDeleteDeployment(data)
+	if namespace == "" {
+		namespace = "default"
+	} else {
+		err := KubeAPI.NamespaceExists(namespace)
+		if err != nil {
+			c.Error(&exceptions.InvalidRequest{})
+			return
+		}
+	}
 
+	deploymentList, err := KubeAPI.KubeGetDeployments(namespace)
+	if err != nil {
+		c.Error(&exceptions.InternalError{})
+		return
+	}
+
+	// Check if deployment exists
+	for _, deployment := range deploymentList.Items {
+		if deployment.Name == deploymentName {
+			err = KubeAPI.KubeDeleteDeployment(namespace, deploymentName)
+			if err != nil {
+				c.Error(&exceptions.InternalError{})
+				return
+			} else {
+				// Successfully deleted deployment
+				c.JSON(http.StatusOK, gin.H{"message": "Item deleted successfully"})
+				return
+			}
+		}
+	}
+
+	// Deployment doesn't exist
+	c.Error(&exceptions.ResourceNotFound{})
+	return
 }

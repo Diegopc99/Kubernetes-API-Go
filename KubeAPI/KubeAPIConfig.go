@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-var KubeClient kubernetes.Clientset
+var KubeClient *kubernetes.Clientset
 
 func ParseKubeConfig() {
 
@@ -18,6 +18,7 @@ func ParseKubeConfig() {
 	if home := homedir.HomeDir(); home != "" {
 		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
 	} else {
+		fmt.Println("No HomeDir specified")
 		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
 	}
 	flag.Parse()
@@ -26,12 +27,11 @@ func ParseKubeConfig() {
 	if err != nil {
 		panic(err)
 	}
-	KubeClient, err := kubernetes.NewForConfig(config)
+
+	KubeClient, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(KubeClient)
 	fmt.Println("Kubernetes client configured!")
 
 }

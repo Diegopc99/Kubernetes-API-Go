@@ -80,7 +80,7 @@ func main() {
 
 	// Add custom error handlers
 	router.NoRoute((func(c *gin.Context) {
-		c.Error(&exceptions.NotFound{})
+		c.Error(&exceptions.EndpointNotFound{})
 	}))
 	router.NoMethod((func(c *gin.Context) {
 		c.Error(&exceptions.MethodNotAllowed{})
@@ -91,6 +91,7 @@ func main() {
 	// Add endpoints
 	router.POST("/deployment/create", handlers.CreateDeployment)
 	router.GET("/deployment/get", handlers.GetDeployment)
+	router.DELETE("/deployment/:deploymentName", handlers.DeleteDeployment)
 
 	// Run server
 	err = router.Run(config.Server.Host + ":" + config.Server.Port)

@@ -11,7 +11,10 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-type NotFound struct {
+type EndpointNotFound struct {
+}
+
+type ResourceNotFound struct {
 }
 
 type MethodNotAllowed struct {
@@ -26,8 +29,12 @@ type InvalidRequest struct {
 type InternalError struct {
 }
 
-func (e *NotFound) Error() string {
+func (e *EndpointNotFound) Error() string {
 	return "Endpoint not found"
+}
+
+func (e *ResourceNotFound) Error() string {
+	return "Resource not found"
 }
 
 func (e *MethodNotAllowed) Error() string {
@@ -43,7 +50,7 @@ func (e *InvalidRequest) Error() string {
 }
 
 func (e *InternalError) Error() string {
-	return "Failed to generate JWT"
+	return "Internal error"
 }
 
 func ErrorHandlerMiddleware() gin.HandlerFunc {
@@ -57,8 +64,10 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 
 			// Handle different types of errors
 			switch err.Err.(type) {
-			case *NotFound:
-				HandleNotFound(c)
+			case *EndpointNotFound:
+				HandleEndpointNotFound(c)
+			case *ResourceNotFound:
+				HandleResourceNotFound(c)
 			case *MethodNotAllowed:
 				HandleMethodNotAllowed(c)
 			case *MissingFields:
@@ -75,11 +84,19 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 	}
 }
 
-func HandleNotFound(c *gin.Context) {
+func HandleEndpointNotFound(c *gin.Context) {
 	c.Header("Content-Type", "application/json")
 	c.JSON(http.StatusNotFound, ErrorResponse{
 		Code:    http.StatusNotFound,
-		Message: (&NotFound{}).Error(),
+		Message: (&EndpointNotFound{}).Error(),
+	})
+}
+
+func HandleResourceNotFound(c *gin.Context) {
+	c.Header("Content-Type", "application/json")
+	c.JSON(http.StatusNotFound, ErrorResponse{
+		Code:    http.StatusNotFound,
+		Message: (&ResourceNotFound{}).Error(),
 	})
 }
 

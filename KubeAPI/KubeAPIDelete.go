@@ -4,24 +4,23 @@ import (
 	"context"
 	"fmt"
 
-	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type DeleteDeploymentData struct {
-	DeploymentName string `json:"deploymentName" binding:"required"`
-}
+func KubeDeleteDeployment(namespace string, deploymentData string) error {
 
-func KubeDeleteDeployment(deploymentData DeleteDeploymentData) {
+	deploymentsClient := KubeClient.AppsV1().Deployments(namespace)
 
-	deploymentsClient := KubeClient.AppsV1().Deployments(apiv1.NamespaceDefault)
+	fmt.Println(deploymentData)
 
 	deletePolicy := metav1.DeletePropagationForeground
-	if err := deploymentsClient.Delete(context.TODO(), deploymentData.DeploymentName, metav1.DeleteOptions{
+	if err := deploymentsClient.Delete(context.TODO(), deploymentData, metav1.DeleteOptions{
 		PropagationPolicy: &deletePolicy,
 	}); err != nil {
-		panic(err)
+		return err
 	}
 	fmt.Println("Deleted deployment.")
+
+	return nil
 
 }
